@@ -49,9 +49,9 @@ static const string default_ns_prefix = "http://thrift.apache.org/xml/ns/";
  *
  * Copied and extended from the XML generator.
  */
-class t_xml_generator : public t_generator {
+class t_xcdatamodel_generator : public t_generator {
 public:
-  t_xml_generator( t_program* program,
+  t_xcdatamodel_generator( t_program* program,
                    const std::map<std::string, std::string>& parsed_options,
                    const std::string& option_string)
     : t_generator(program) {
@@ -76,7 +76,7 @@ public:
     out_dir_base_ = "gen-xml";
   }
 
-  virtual ~t_xml_generator() {}
+  virtual ~t_xcdatamodel_generator() {}
 
   void init_generator();
   void close_generator();
@@ -150,7 +150,7 @@ private:
   }
 };
 
-void t_xml_generator::init_generator() {
+void t_xcdatamodel_generator::init_generator() {
   MKDIR(get_out_dir().c_str());
 
   string f_xml_name = get_out_dir() + program_->get_name() + ".xml";
@@ -159,7 +159,7 @@ void t_xml_generator::init_generator() {
   top_element_is_open = false;
 }
 
-string t_xml_generator::target_namespace(t_program* program) {
+string t_xcdatamodel_generator::target_namespace(t_program* program) {
   std::map<std::string, std::string> map;
   std::map<std::string, std::string>::iterator iter;
   map = program->get_namespace_annotations("xml");
@@ -181,7 +181,7 @@ string t_xml_generator::target_namespace(t_program* program) {
   return default_ns_prefix + program->get_name();
 }
 
-void t_xml_generator::write_xml_comment(string msg) {
+void t_xcdatamodel_generator::write_xml_comment(string msg) {
   close_top_element();
   // TODO: indent any EOLs that may occur with msg
   // TODO: proper msg escaping needed?
@@ -189,7 +189,7 @@ void t_xml_generator::write_xml_comment(string msg) {
   top_element_is_empty = false;
 }
 
-void t_xml_generator::close_top_element() {
+void t_xcdatamodel_generator::close_top_element() {
   if( top_element_is_open) {
     top_element_is_open = false;
     if (elements_.size() > 0 && top_element_is_empty) {
@@ -198,7 +198,7 @@ void t_xml_generator::close_top_element() {
   }
 }
 
-void t_xml_generator::write_element_start(string name) {
+void t_xcdatamodel_generator::write_element_start(string name) {
   if (should_use_namespaces_ && !should_use_default_ns_) {
     name = "idl:" + name;
   }
@@ -210,7 +210,7 @@ void t_xml_generator::write_element_start(string name) {
   indent_up();
 }
 
-void t_xml_generator::write_element_end() {
+void t_xcdatamodel_generator::write_element_end() {
   indent_down();
   if (top_element_is_empty && top_element_is_open) {
     f_xml_ << " />" << endl;
@@ -221,15 +221,15 @@ void t_xml_generator::write_element_end() {
   elements_.pop();
 }
 
-void t_xml_generator::write_attribute(string key, string val) {
+void t_xcdatamodel_generator::write_attribute(string key, string val) {
   f_xml_ << " " << key << "=\"" << escape_xml_string(val) << "\"";
 }
 
-void t_xml_generator::write_int_attribute(string key, int val) {
+void t_xcdatamodel_generator::write_int_attribute(string key, int val) {
   write_attribute(key, number_to_string(val));
 }
 
-void t_xml_generator::write_element_string(string name, string val) {
+void t_xcdatamodel_generator::write_element_string(string name, string val) {
   if (should_use_namespaces_ && !should_use_default_ns_) {
     name = "idl:" + name;
   }
@@ -240,7 +240,7 @@ void t_xml_generator::write_element_string(string name, string val) {
     << endl;
 }
 
-string t_xml_generator::escape_xml_string(const string& input) {
+string t_xcdatamodel_generator::escape_xml_string(const string& input) {
   std::ostringstream ss;
   for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
     switch (*iter) {
@@ -267,13 +267,13 @@ string t_xml_generator::escape_xml_string(const string& input) {
   return ss.str();
 }
 
-void t_xml_generator::close_generator() {
+void t_xcdatamodel_generator::close_generator() {
   f_xml_.close();
 }
 
-void t_xml_generator::generate_program() {
 
   init_generator();
+void t_xcdatamodel_generator::generate_program() {
 
   write_element_start("idl");
   if (should_use_namespaces_) {
@@ -293,7 +293,7 @@ void t_xml_generator::generate_program() {
 
 }
 
-void t_xml_generator::iterate_program(t_program* program) {
+void t_xcdatamodel_generator::iterate_program(t_program* program) {
 
   write_element_start("document");
   write_attribute("name", program->get_name());
@@ -372,7 +372,7 @@ void t_xml_generator::iterate_program(t_program* program) {
 
 }
 
-void t_xml_generator::generate_typedef(t_typedef* ttypedef) {
+void t_xcdatamodel_generator::generate_typedef(t_typedef* ttypedef) {
   write_element_start("typedef");
   write_attribute("name", ttypedef->get_name());
   write_doc(ttypedef);
@@ -382,7 +382,7 @@ void t_xml_generator::generate_typedef(t_typedef* ttypedef) {
   return;
 }
 
-void t_xml_generator::write_type(t_type* ttype) {
+void t_xcdatamodel_generator::write_type(t_type* ttype) {
   const string type = get_type_name(ttype);
   write_attribute("type", type);
   if (type == "id") {
@@ -410,7 +410,7 @@ void t_xml_generator::write_type(t_type* ttype) {
   }
 }
 
-void t_xml_generator::write_doc(t_doc* tdoc) {
+void t_xcdatamodel_generator::write_doc(t_doc* tdoc) {
   if (tdoc->has_doc()) {
     string doc = tdoc->get_doc();
     // for some reason there always seems to be a trailing newline on doc
@@ -428,8 +428,7 @@ void t_xml_generator::write_doc(t_doc* tdoc) {
   }
 }
 
-void t_xml_generator::generate_annotations(
-    std::map<std::string, std::string> annotations) {
+void t_xcdatamodel_generator::generate_annotations(std::map<std::string, std::string> annotations) {
   std::map<std::string, std::string>::iterator iter;
   for (iter = annotations.begin(); iter != annotations.end(); ++iter) {
     write_element_start("annotation");
@@ -439,7 +438,7 @@ void t_xml_generator::generate_annotations(
   }
 }
 
-void t_xml_generator::generate_constant(t_const* con) {
+void t_xcdatamodel_generator::generate_constant(t_const* con) {
   write_element_start("const");
   write_attribute("name", con->get_name());
   write_doc(con);
@@ -448,7 +447,7 @@ void t_xml_generator::generate_constant(t_const* con) {
   write_element_end();
 }
 
-void t_xml_generator::write_const_value(t_const_value* value) {
+void t_xcdatamodel_generator::write_const_value(t_const_value* value) {
 
   switch (value->get_type()) {
 
@@ -505,7 +504,7 @@ void t_xml_generator::write_const_value(t_const_value* value) {
 
 }
 
-void t_xml_generator::generate_enum(t_enum* tenum) {
+void t_xcdatamodel_generator::generate_enum(t_enum* tenum) {
 
   write_element_start("enum");
   write_attribute("name", tenum->get_name());
@@ -529,7 +528,6 @@ void t_xml_generator::generate_enum(t_enum* tenum) {
 
 }
 
-void t_xml_generator::generate_struct(t_struct* tstruct) {
 
   string tagname = "struct";
   if (tstruct->is_union()) {
@@ -539,6 +537,7 @@ void t_xml_generator::generate_struct(t_struct* tstruct) {
   }
 
   write_element_start(tagname);
+void t_xcdatamodel_generator::generate_struct(t_struct* tstruct) {
   write_attribute("name", tstruct->get_name());
   write_doc(tstruct);
   vector<t_field*> members = tstruct->get_members();
@@ -555,7 +554,6 @@ void t_xml_generator::generate_struct(t_struct* tstruct) {
 
 }
 
-void t_xml_generator::generate_field(t_field* field) {
   write_attribute("name", field->get_name());
   write_int_attribute("field-id", field->get_key());
   write_doc(field);
@@ -573,6 +571,7 @@ void t_xml_generator::generate_field(t_field* field) {
   }
   if (requiredness != "") {
     write_attribute("required", requiredness);
+void t_xcdatamodel_generator::generate_field(t_field* field) {
   }
   write_type(field->get_type());
   if (field->get_value()) {
@@ -583,7 +582,7 @@ void t_xml_generator::generate_field(t_field* field) {
   generate_annotations(field->annotations_);
 }
 
-void t_xml_generator::generate_service(t_service* tservice) {
+void t_xcdatamodel_generator::generate_service(t_service* tservice) {
 
   write_element_start("service");
   write_attribute("name", tservice->get_name());
@@ -618,7 +617,7 @@ void t_xml_generator::generate_service(t_service* tservice) {
 
 }
 
-void t_xml_generator::generate_function(t_function* tfunc) {
+void t_xcdatamodel_generator::generate_function(t_function* tfunc) {
 
   write_element_start("method");
 
@@ -655,7 +654,7 @@ void t_xml_generator::generate_function(t_function* tfunc) {
 
 }
 
-string t_xml_generator::get_type_name(t_type* ttype) {
+string t_xcdatamodel_generator::get_type_name(t_type* ttype) {
   if (ttype->is_list()) {
     return "list";
   }
