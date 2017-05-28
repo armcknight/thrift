@@ -73,7 +73,7 @@ public:
       }
     }
 
-    out_dir_base_ = "gen-xml";
+    out_dir_base_ = "gen-xcdatamodel";
   }
 
   virtual ~t_xcdatamodel_generator() {}
@@ -153,7 +153,7 @@ private:
 void t_xcdatamodel_generator::init_generator() {
   MKDIR(get_out_dir().c_str());
 
-  string f_xml_name = get_out_dir() + program_->get_name() + ".xml";
+  string f_xml_name = get_out_dir() + program_->get_name() + ".xcdatamodeld/" + program_->get_name() + ".xcdatamodel/contents";
   f_xml_.open(f_xml_name.c_str());
 
   top_element_is_open = false;
@@ -271,26 +271,30 @@ void t_xcdatamodel_generator::close_generator() {
   f_xml_.close();
 }
 
+void t_xcdatamodel_generator::write_processing_instruction() {
+  f_xml_ << "<?xml"; // begin processing instruction
+  write_attribute("version", "1.0");
+  write_attribute("encoding", "UTF-8");
+  write_attribute("standalone", "yes");
+  f_xml_ << "?>"; // end processing instruction
+}
 
-  init_generator();
 void t_xcdatamodel_generator::generate_program() {
-
-  write_element_start("idl");
-  if (should_use_namespaces_) {
-    if (should_use_default_ns_) {
-      write_attribute("xmlns", "http://thrift.apache.org/xml/idl");
-    }
-    write_attribute("xmlns:idl", "http://thrift.apache.org/xml/idl");
-  }
-
-  write_xml_comment( xml_autogen_comment());
+  init_generator();
+  
+  write_processing_instruction();
+  
+  write_element_start("model");
+  write_attribute("type", "com.apple.IDECoreDataModeler.DataModel");
+  write_attribute("documentVersion", "1.0");
+  write_attribute("minimumToolsVersion", "Automatic");
+  write_attribute("sourceLanguage", "Objective-C");
 
   iterate_program(program_);
 
   write_element_end();
 
   close_generator();
-
 }
 
 void t_xcdatamodel_generator::iterate_program(t_program* program) {
@@ -384,7 +388,7 @@ void t_xcdatamodel_generator::generate_typedef(t_typedef* ttypedef) {
 
 void t_xcdatamodel_generator::write_type(t_type* ttype) {
   const string type = get_type_name(ttype);
-  write_attribute("type", type);
+  write_attribute("attributeType", type);
   if (type == "id") {
     write_attribute("type-module", ttype->get_program()->get_name());
     write_attribute("type-id", ttype->get_name());
@@ -528,22 +532,18 @@ void t_xcdatamodel_generator::generate_enum(t_enum* tenum) {
 
 }
 
-
-  string tagname = "struct";
-  if (tstruct->is_union()) {
-    tagname = "union";
-  } else if (tstruct->is_xception()) {
-    tagname = "exception";
-  }
-
-  write_element_start(tagname);
 void t_xcdatamodel_generator::generate_struct(t_struct* tstruct) {
+  write_element_start("entity");
+  
   write_attribute("name", tstruct->get_name());
-  write_doc(tstruct);
+  write_attribute("representedClassName", tstruct->get_name());
+  write_attribute("syncable", "YES");
+  write_attribute("codeGenerationType", "class");
+
   vector<t_field*> members = tstruct->get_members();
   vector<t_field*>::iterator mem_iter;
   for (mem_iter = members.begin(); mem_iter != members.end(); mem_iter++) {
-    write_element_start("field");
+    write_element_start("attribute");
     generate_field(*mem_iter);
     write_element_end();
   }
@@ -554,26 +554,39 @@ void t_xcdatamodel_generator::generate_struct(t_struct* tstruct) {
 
 }
 
-  write_attribute("name", field->get_name());
-  write_int_attribute("field-id", field->get_key());
-  write_doc(field);
-  string requiredness;
-  switch (field->get_req()) {
-  case t_field::T_REQUIRED:
-    requiredness = "required";
-    break;
-  case t_field::T_OPTIONAL:
-    requiredness = "optional";
-    break;
-  default:
-    requiredness = "";
-    break;
+string t_xcdatamodel_generator::transformed_type(string type) {
+  if (type == "string") {
+    return "String";
   }
-  if (requiredness != "") {
-    write_attribute("required", requiredness);
+  else if (type == "bool") {
+    return "Boolean";
+  }
+  else if (type == "byte") {
+    return "Integer 16";
+  }
+  else if (type == "i16") {
+    return "Integer 16";
+  }
+  else if (type == "i32") {
+    return "Integer 32";
+  }
+  else if (type == "i64") {
+    return "Integer 64";
+  }
+  else if (type == "double") {
+    return "Double";
+  }
+  else if (type == "binary") {
+    return "Binary";
+  }
+}
+
 void t_xcdatamodel_generator::generate_field(t_field* field) {
+  write_attribute("name", field->get_name());
+  if (t_field::T_OPTIONAL == field->get_req()) {
+    write_attribute("optional", "YES");
   }
-  write_type(field->get_type());
+  write_type(transformed_type(field->get_type()));
   if (field->get_value()) {
     write_element_start("default");
     write_const_value(field->get_value());
