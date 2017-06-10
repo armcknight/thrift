@@ -344,6 +344,8 @@ void t_xcdatamodel_generator::iterate_program(t_program* program) {
   for (en_iter = enums.begin(); en_iter != enums.end(); ++en_iter) {
     generate_enum(*en_iter);
   }
+  
+  // TODO: create different output stream for the xcdatamodel contents file
 
   vector<t_struct*> objects = program->get_objects();
   vector<t_struct*>::iterator o_iter;
